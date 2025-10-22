@@ -1,130 +1,141 @@
+
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { setAuthToken } from "@/hooks/useAuth";
+import { queryClient } from "@/lib/queryClient";
 
 interface AuthModalProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onLogin?: (username: string, password: string) => void;
-  onSignup?: (username: string, password: string) => void;
+  onClose: () => void;
 }
 
-export default function AuthModal({
-  open,
-  onOpenChange,
-  onLogin,
-  onSignup,
-}: AuthModalProps) {
-  const [loginUsername, setLoginUsername] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-  const [signupUsername, setSignupUsername] = useState("");
-  const [signupPassword, setSignupPassword] = useState("");
+export default function AuthModal({ open, onClose }: AuthModalProps) {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin?.(loginUsername, loginPassword);
-    console.log('Login submitted:', loginUsername);
-  };
+    setLoading(true);
 
-  const handleSignup = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSignup?.(signupUsername, signupPassword);
-    console.log('Signup submitted:', signupUsername);
+    try {
+      const endpoint = isLogin ? "/api/login" : "/api/register";
+      const body = isLogin
+        ? { email, password }
+        : { email, password, firstName, lastName };
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Error en autenticación");
+      }
+
+      setAuthToken(data.token);
+      queryClient.invalidateQueries();
+      
+      toast({
+        title: isLogin ? "Inicio de sesión exitoso" : "Registro exitoso",
+        description: `Bienvenido ${data.user.email}`,
+      });
+
+      onClose();
+      window.location.reload();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md" data-testid="modal-auth">
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-display">
-            Bienvenido a FitOrange
-          </DialogTitle>
-          <DialogDescription>
-            Inicia sesión o crea una cuenta para comenzar
-          </DialogDescription>
+          <DialogTitle>{isLogin ? "Iniciar Sesión" : "Registrarse"}</DialogTitle>
         </DialogHeader>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
 
-        <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login" data-testid="tab-login">
-              Iniciar Sesión
-            </TabsTrigger>
-            <TabsTrigger value="signup" data-testid="tab-signup">
-              Registrarse
-            </TabsTrigger>
-          </TabsList>
+          <div className="space-y-2">
+            <Label htmlFor="password">Contraseña</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+            />
+          </div>
 
-          <TabsContent value="login">
-            <form onSubmit={handleLogin} className="space-y-4">
+          {!isLogin && (
+            <>
               <div className="space-y-2">
-                <Label htmlFor="login-username">Usuario</Label>
+                <Label htmlFor="firstName">Nombre (opcional)</Label>
                 <Input
-                  id="login-username"
-                  placeholder="tu_usuario"
-                  value={loginUsername}
-                  onChange={(e) => setLoginUsername(e.target.value)}
-                  data-testid="input-login-username"
-                  required
+                  id="firstName"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="login-password">Contraseña</Label>
-                <Input
-                  id="login-password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  data-testid="input-login-password"
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" data-testid="button-login-submit">
-                Iniciar Sesión
-              </Button>
-            </form>
-          </TabsContent>
 
-          <TabsContent value="signup">
-            <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="signup-username">Usuario</Label>
+                <Label htmlFor="lastName">Apellido (opcional)</Label>
                 <Input
-                  id="signup-username"
-                  placeholder="tu_usuario"
-                  value={signupUsername}
-                  onChange={(e) => setSignupUsername(e.target.value)}
-                  data-testid="input-signup-username"
-                  required
+                  id="lastName"
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-password">Contraseña</Label>
-                <Input
-                  id="signup-password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={signupPassword}
-                  onChange={(e) => setSignupPassword(e.target.value)}
-                  data-testid="input-signup-password"
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" data-testid="button-signup-submit">
-                Crear Cuenta
-              </Button>
-            </form>
-          </TabsContent>
-        </Tabs>
+            </>
+          )}
+
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Cargando..." : isLogin ? "Iniciar Sesión" : "Registrarse"}
+          </Button>
+        </form>
+
+        <div className="text-center">
+          <Button
+            variant="link"
+            onClick={() => setIsLogin(!isLogin)}
+            type="button"
+          >
+            {isLogin
+              ? "¿No tienes cuenta? Regístrate"
+              : "¿Ya tienes cuenta? Inicia sesión"}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
