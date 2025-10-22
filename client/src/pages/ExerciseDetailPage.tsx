@@ -1,60 +1,78 @@
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import ExerciseDetail from "@/components/ExerciseDetail";
-import AuthModal from "@/components/AuthModal";
-import { useLocation } from "wouter";
-import pushupImage from "@assets/generated_images/Push-up_exercise_demonstration_fdb19427.png";
+import { useLocation, useParams } from "wouter";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { isUnauthorizedError } from "@/lib/authUtils";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function ExerciseDetailPage() {
-  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const { id } = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
+
+  const { data: exercise, isLoading } = useQuery<any>({
+    queryKey: ["/api/exercises", id],
+    queryFn: async () => {
+      const response = await fetch(`/api/exercises/${id}`);
+      if (!response.ok) throw new Error("Failed to fetch exercise");
+      return response.json();
+    },
+  });
+
+  const handleStart = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Inicia sesión",
+        description: "Debes iniciar sesión para comenzar un ejercicio",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 1000);
+      return;
+    }
+
+    toast({
+      title: "¡Comenzando ejercicio!",
+      description: "El temporizador ha iniciado",
+    });
+  };
+
+  if (isLoading || !exercise) {
+    return (
+      <div className="min-h-screen">
+        <Header
+          onAuthClick={() => setLocation("/dashboard")}
+          onSearchChange={() => {}}
+        />
+        <div className="flex items-center justify-center h-[70vh]">
+          <p className="text-muted-foreground">Cargando ejercicio...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
       <Header
-        onAuthClick={() => setAuthModalOpen(true)}
-        onSearchChange={(query) => console.log("Search:", query)}
+        onAuthClick={() => setLocation("/dashboard")}
+        onSearchChange={() => {}}
       />
 
       <ExerciseDetail
-        title="Flexiones"
-        category="Fuerza"
-        duration="15 min"
-        difficulty="Intermedio"
-        calories="120 kcal"
-        image={pushupImage}
-        instructions={[
-          "Colócate en posición de plancha con las manos separadas al ancho de los hombros",
-          "Mantén el cuerpo recto desde la cabeza hasta los talones",
-          "Baja el cuerpo doblando los codos hasta que el pecho casi toque el suelo",
-          "Empuja hacia arriba hasta volver a la posición inicial",
-          "Repite el movimiento de forma controlada",
-        ]}
-        benefits={[
-          "Fortalece pecho, hombros y tríceps",
-          "Mejora la fuerza del core",
-          "Aumenta la resistencia muscular",
-          "No requiere equipo especial",
-        ]}
-        tips={[
-          "Mantén el core apretado durante todo el ejercicio",
-          "No dejes que las caderas caigan",
-          "Respira: inhala al bajar, exhala al subir",
-          "Empieza con pocas repeticiones y aumenta gradualmente",
-        ]}
+        title={exercise.title}
+        category={exercise.category}
+        duration={exercise.duration}
+        difficulty={exercise.difficulty}
+        calories={exercise.calories}
+        image={exercise.image}
+        instructions={exercise.instructions}
+        benefits={exercise.benefits}
+        tips={exercise.tips}
         onBack={() => setLocation("/")}
-        onStart={() => console.log("Start exercise clicked")}
-      />
-
-      <AuthModal
-        open={authModalOpen}
-        onOpenChange={setAuthModalOpen}
-        onLogin={(username, password) =>
-          console.log("Login:", username, password)
-        }
-        onSignup={(username, password) =>
-          console.log("Signup:", username, password)
-        }
+        onStart={handleStart}
       />
     </div>
   );

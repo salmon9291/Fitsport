@@ -3,17 +3,31 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useAuth } from "@/hooks/useAuth";
 import HomePage from "@/pages/HomePage";
 import DashboardPage from "@/pages/DashboardPage";
 import ExerciseDetailPage from "@/pages/ExerciseDetailPage";
+import LandingPage from "@/pages/LandingPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
+  const { isAuthenticated, isLoading } = useAuth();
+
   return (
     <Switch>
-      <Route path="/" component={HomePage} />
-      <Route path="/dashboard" component={DashboardPage} />
-      <Route path="/exercise/:id" component={ExerciseDetailPage} />
+      {isLoading || !isAuthenticated ? (
+        <>
+          <Route path="/" component={LandingPage} />
+          <Route path="/exercises" component={HomePage} />
+          <Route path="/exercise/:id" component={ExerciseDetailPage} />
+        </>
+      ) : (
+        <>
+          <Route path="/" component={HomePage} />
+          <Route path="/dashboard" component={DashboardPage} />
+          <Route path="/exercise/:id" component={ExerciseDetailPage} />
+        </>
+      )}
       <Route component={NotFound} />
     </Switch>
   );
