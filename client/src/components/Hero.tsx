@@ -1,7 +1,11 @@
 import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
+
 const heroImage = "/attached_assets/generated_images/Multi-sport_athletic_hero_image_6975852b.png";
 
 export default function Hero() {
+  const [, setLocation] = useLocation();
+
   return (
     <section className="relative h-[70vh] w-full overflow-hidden">
       <img
@@ -24,7 +28,7 @@ export default function Hero() {
             size="lg"
             className="text-lg"
             data-testid="button-get-started"
-            onClick={() => console.log('Get started clicked')}
+            onClick={() => setLocation('/subscription')}
           >
             Comenzar Ahora
           </Button>
@@ -33,7 +37,7 @@ export default function Hero() {
             variant="outline"
             className="text-lg backdrop-blur-md bg-white/10 border-white/30 text-white hover:bg-white/20"
             data-testid="button-explore"
-            onClick={() => console.log('Explore clicked')}
+            onClick={() => window.scrollTo({ top: 800, behavior: 'smooth' })}
           >
             Explorar Ejercicios
           </Button>
