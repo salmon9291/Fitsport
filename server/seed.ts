@@ -35,7 +35,7 @@ const seedExercises = [
     duration: "20 min",
     difficulty: "Fácil",
     calories: "80 kcal",
-    image: "/assets/generated_images/Yoga_warrior_pose_demonstration_caa2a224.png",
+    image: "/attached_assets/generated_images/Yoga_warrior_pose_demonstration_caa2a224.png",
     instructions: [
       "Comienza de pie con los pies juntos",
       "Da un paso grande hacia atrás con el pie izquierdo",
@@ -133,7 +133,7 @@ const seedExercises = [
     tips: [
       "No dejes caer las caderas",
       "No levantes demasiado los glúteos",
-      "Respira normalmente, no contengas la respiración",
+      "Respira normally, no contengas la respiración",
       "Aumenta el tiempo gradualmente",
     ],
   },
@@ -143,7 +143,7 @@ const seedExercises = [
     duration: "25 min",
     difficulty: "Fácil",
     calories: "110 kcal",
-    image: "/assets/generated_images/Yoga_warrior_pose_demonstration_caa2a224.png",
+    image: "/attached_assets/generated_images/Yoga_warrior_pose_demonstration_caa2a224.png",
     instructions: [
       "Comienza en posición de montaña (de pie, pies juntos)",
       "Fluye a través de posturas de saludo al sol",
@@ -168,11 +168,11 @@ const seedExercises = [
 
 export async function seedDatabase() {
   console.log("Seeding database with exercises...");
-  
+
   try {
     // Check if exercises already exist
     const existingExercises = await db.select().from(exercises);
-    
+
     if (existingExercises.length > 0) {
       console.log("Database already seeded, skipping...");
       return;
@@ -180,7 +180,7 @@ export async function seedDatabase() {
 
     // Insert seed exercises
     await db.insert(exercises).values(seedExercises);
-    
+
     console.log(`Successfully seeded ${seedExercises.length} exercises`);
   } catch (error) {
     console.error("Error seeding database:", error);

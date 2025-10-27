@@ -23,6 +23,11 @@ export default function Header() {
               <Button variant="ghost">Ejercicios</Button>
             </a>
           </Link>
+          <Link href="/subscription">
+            <a>
+              <Button variant="ghost">Suscripción</Button>
+            </a>
+          </Link>
         </nav>
       </div>
     </header>

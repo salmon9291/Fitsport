@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import heroImage from "@assets/generated_images/Multi-sport_athletic_hero_image_6975852b.png";
+const heroImage = "/attached_assets/generated_images/Multi-sport_athletic_hero_image_6975852b.png";
 
 export default function Hero() {
   return (
